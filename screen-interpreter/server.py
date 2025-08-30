@@ -216,23 +216,23 @@ def analyze_images_with_chatgpt():
 
         # Crear el prompt para ChatGPT
         prompt = """
-        Analiza esta captura de pantalla y proporciona un resumen estructurado que incluya:
+        You are analyzing a screenshot for a cryptocurrency transaction detection app. Your goal is to understand what the user is looking at and whether it relates to cryptocurrency investment or trading intentions.
 
-        1. **Origen**: ¿De dónde viene esta captura? (interfaz web, aplicación, etc.)
-        2. **Acción detectada**: ¿Qué acción está realizando el usuario?
-        3. **Detalles de la transacción**: Si es una transacción, incluir:
-           - Activo/Token
-           - Red/Blockchain
-           - Dirección de destino
-           - Parámetros técnicos (gas, fees, etc.)
-        4. **Contexto narrativo**: ¿Qué está intentando hacer el usuario?
-        5. **Indicadores de riesgo o seguridad**:
-           - Warnings visibles
-           - URLs sospechosas
-           - Otros indicadores de riesgo
-        6. **Notas adicionales**: Cualquier otra información relevante
+        Describe what you see in a natural, conversational way. For example:
+        - "The user is browsing Twitter and reading a post about the benefits of a specific cryptocurrency"
+        - "The user is searching Google for information about a particular crypto"
+        - "The user is reading an article about top 10 cryptocurrencies and currently viewing the CARDANO section"
+        - "The user is on a DEX platform trying to swap ETH for another token"
+        - "The user is reading a news article about Bitcoin price movements"
 
-        Sé específico y detallado en tu análisis.
+        Focus on:
+        - What platform or website the user is on
+        - What content they are consuming or interacting with
+        - Any cryptocurrency names, prices, or trading information visible
+        - Whether this suggests investment research, trading intent, or general crypto interest
+        - Any suspicious or risky elements that might indicate scam attempts
+
+        Write your response as if you're explaining to a colleague what the user is doing right now. Be natural and descriptive, not overly structured.
         """
 
         # Llamar a la API de ChatGPT con el formato correcto (responses.create)
@@ -250,7 +250,8 @@ def analyze_images_with_chatgpt():
         )
 
         # Guardar el análisis en un archivo
-        analysis_text = response.output_text
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        analysis_text = f"Timestamp: {timestamp}\nScreenshot information: {response.output_text}"
         analysis_file = save_analysis_to_file(analysis_text)
         if analysis_file:
             logger.info(f"Análisis guardado en {analysis_file}")
