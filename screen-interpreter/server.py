@@ -170,7 +170,7 @@ def analyze_final_intent(previous_analyses):
 
         # Llamar a la API de ChatGPT
         response = client.responses.create(
-            model="gpt-5-nano",
+            model="gpt-5",
             input=[
                 {
                     "role": "user",
@@ -258,7 +258,7 @@ def analyze_images_with_chatgpt():
 
         # Llamar a la API de ChatGPT con el formato correcto (responses.create)
         response = client.responses.create(
-            model="gpt-5-nano",
+            model="gpt-5",
             input=[
                 {
                     "role": "user",
