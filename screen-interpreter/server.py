@@ -11,6 +11,7 @@ from io import BytesIO
 from openai import OpenAI
 from collections import deque
 import time
+import requests
 import shutil
 import json
 from dotenv import load_dotenv
@@ -309,6 +310,17 @@ def generate_final_analysis():
             'message': f'Error al generar el análisis final: {str(e)}'
         }), 500
 
+def send_intent_to_rpc_server(intent):
+    """Envía el análisis final al servidor RPC."""
+    try:
+        response = requests.post(os.getenv('RPC_SERVER_API'), json={'intent': intent}, headers={'Content-Type': 'application/json'})
+        if response.status_code > 299:
+            logger.error(f"Error al enviar análisis al servidor RPC: {response.status_code} - {response.text}")
+            return
+        logger.info("Análisis final enviado al servidor RPC correctamente")
+    except Exception as e:
+        logger.error(f"Excepción al enviar análisis al servidor RPC: {str(e)}")
+
 @app.route('/stop-recording', methods=['POST', 'OPTIONS'])
 def stop_recording():
     """Endpoint para detener la grabación, generar el análisis final y limpiar las imágenes."""
@@ -317,7 +329,7 @@ def stop_recording():
     # Manejar preflight request
     if request.method == 'OPTIONS':
         return '', 200
-    
+
     logger.info("Recibida petición para detener la grabación")
     logger.info(f"Estado inicial del buffer: {list(image_buffer)}")
     logger.info(f"Número de imágenes en el buffer: {len(image_buffer)}")
@@ -410,6 +422,8 @@ def stop_recording():
             
             # Marcar que terminamos de procesar
             is_processing = False
+
+            send_intent_to_rpc_server(final_analysis['analysis'])
             
             return jsonify({
                 'success': True,

@@ -21,3 +21,4 @@ services:
     - "5001:5001"
     environment:
       OPENAI_API_KEY: ${OPENAI_API_KEY}
+      RPC_SERVER_API: http://rpc-server:8089/intents
