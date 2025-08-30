@@ -145,22 +145,31 @@ def analyze_final_intent(previous_analyses):
     try:
         # Crear el prompt para el análisis final
         prompt = """
-        Basado en los siguientes análisis de capturas de pantalla, genera un análisis final de la intención del usuario:
+        Based on the following screenshot analyses, generate a final analysis of the user's cryptocurrency transaction intent:
 
         {analyses}
 
-        Por favor, proporciona:
-        1. **Intención general**: ¿Qué parece estar intentando hacer el usuario, siempre pensando que su objetivo es hacer una transaccion en la blockchain?
-        2. **Patrón de comportamiento**: ¿Hay algún patrón o secuencia de acciones que sugiera una intención específica?
-        3. **Riesgos identificados**: ¿Hay algún riesgo o comportamiento sospechoso en las acciones del usuario?
-        4. **Contexto completo**: ¿Qué información adicional o contexto podemos inferir de todas las interacciones?
+        Your goal is to determine the user's INTENT to buy, sell, or exchange cryptocurrencies based on all the captured screenshots.
 
-        Sé específico y detallado en tu análisis, utilizando toda la información disponible.
+        Please provide:
+        1. **Overall Intent**: What does the user appear to be trying to accomplish? Are they researching to buy, preparing to sell, or attempting to exchange crypto?
+        2. **Behavioral Pattern**: Is there a pattern or sequence of actions that suggests a specific transaction intention?
+        3. **Identified Risks**: Are there any risks or suspicious behaviors in the user's actions?
+        4. **Complete Context**: What additional information or context can we infer from all the interactions?
+
+        Focus specifically on determining if the user intends to:
+        - Buy cryptocurrency (and which one)
+        - Sell cryptocurrency (and which one)
+        - Exchange/swap tokens
+        - Research before making a transaction
+        - Execute a specific trading strategy
+
+        Be specific and detailed in your analysis, using all available information to determine the user's cryptocurrency transaction intent.
         """
 
         # Llamar a la API de ChatGPT
         response = client.responses.create(
-            model="gpt-4.1",
+            model="gpt-5-nano",
             input=[
                 {
                     "role": "user",
@@ -237,7 +246,7 @@ def analyze_images_with_chatgpt():
 
         # Llamar a la API de ChatGPT con el formato correcto (responses.create)
         response = client.responses.create(
-            model="gpt-4.1",
+            model="gpt-5-nano",
             input=[
                 {
                     "role": "user",
@@ -335,26 +344,25 @@ def stop_recording():
                 if base64_image:
                     # Crear el prompt para ChatGPT
                     prompt = """
-                    Para cada imagen o captura (web, tweet, mensaje de chat, notificación, etc.), genera un **resumen estructurado** que incluya:
-
-                    1. **Origen**: tipo de fuente (interfaz web, aplicación móvil, tweet, mensaje de chat…).  
-                    2. **Acción detectada**: interacción con blockchain (swap, envío, approval…), lectura de contenido (tweet, alerta) o mensaje que pueda disparar una llamada.  
-                    3. **Detalles de la transacción** (si aplica):  
-                    - Activos (tokens, cantidades, dirección de destino)  
-                    - Red/blockchain involucrada  
-                    - Parámetros clave (gas price/limit, fees, slippage, deadline)  
-                    4. **Contexto narrativo**: texto relevante (mensaje, tweet), mención de intenciones ("quiero intercambiar…", "autorizo a…")  
-                    5. **Indicadores de riesgo o seguridad**: warnings, iconos de confianza, contract address, errores, URLs sospechosas.  
-                    6. **Notas adicionales**: cualquier otro dato que pueda usarse como "payload" para un LLM que infiera la intención del usuario.
-
-
-                    referencia: no tomar en cuenta nada de screenrecoding o grabacion de pantalla para el analis, ya que esta solo se usa para generar las imagenes, hacer todo como si eso no existiera.
-                    Sé específico y detallado en tu análisis.
+                    You are analyzing a screenshot for a cryptocurrency transaction detection app. Your goal is to understand what the user is looking at and whether it relates to cryptocurrency investment or trading intentions.
+                    Describe what you see in a natural, conversational way. For example:
+                    - "The user is browsing Twitter and reading a post about the benefits of a specific cryptocurrency"
+                    - "The user is searching Google for information about a particular crypto"
+                    - "The user is reading an article about top 10 cryptocurrencies and currently viewing the CARDANO section"
+                    - "The user is on a DEX platform trying to swap ETH for another token"
+                    - "The user is reading a news article about Bitcoin price movements"
+                    Focus on:
+                    - What platform or website the user is on
+                    - What content they are consuming or interacting with
+                    - Any cryptocurrency names, prices, or trading information visible
+                    - Whether this suggests investment research, trading intent, or general crypto interest
+                    - Any suspicious or risky elements that might indicate scam attempts
+                    Write your response as if you're explaining to a colleague what the user is doing right now. Be natural and descriptive, not overly structured.
                     """
 
                     # Llamar a la API de ChatGPT con el formato correcto
                     response = client.responses.create(
-                        model="gpt-4.1",
+                        model="gpt-5-nano",
                         input=[
                             {
                                 "role": "user",
