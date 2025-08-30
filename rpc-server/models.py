@@ -9,7 +9,6 @@ class TxInfo:
     signed_raw_tx: str
     from_account: str
     allowed: bool = False
-    warnings: list[_Warning] = field(default_factory=list)
     accepted_warning: str = ""
 
 class CamelCaseModel(BaseModel):
