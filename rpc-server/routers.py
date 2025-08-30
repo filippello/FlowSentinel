@@ -99,7 +99,7 @@ async def process_tx(tx_hash: str, intent: str) -> tuple[int, str]:
 
     if veredict["status"] != "approved":
         logger.warning(f"TX {tx_hash}, CANCELED.")
-        return (ACCEPTED_WARNING, "")
+        return (ACCEPTED_WARNING, veredict["message"])
 
     logger.info(f"TX {tx_hash} ALLOWED, RELEASING.")
     return (RELEASED_TX, await release_tx(tx_hash))
