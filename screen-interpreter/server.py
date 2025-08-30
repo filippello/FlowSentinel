@@ -145,26 +145,26 @@ def analyze_final_intent(previous_analyses):
     try:
         # Crear el prompt para el análisis final
         prompt = """
-        Based on the following screenshot analyses, generate a final analysis of the user's cryptocurrency transaction intent:
+        Based on the following screenshot analyses, provide a clear conclusion about the user's cryptocurrency transaction intent:
 
         {analyses}
 
-        Your goal is to determine the user's INTENT to buy, sell, or exchange cryptocurrencies based on all the captured screenshots.
+        Your goal is to determine the user's INTENT to buy, sell, exchange, or transfer cryptocurrencies.
 
-        Please provide:
-        1. **Overall Intent**: What does the user appear to be trying to accomplish? Are they researching to buy, preparing to sell, or attempting to exchange crypto?
-        2. **Behavioral Pattern**: Is there a pattern or sequence of actions that suggests a specific transaction intention?
-        3. **Identified Risks**: Are there any risks or suspicious behaviors in the user's actions?
-        4. **Complete Context**: What additional information or context can we infer from all the interactions?
+        Provide a single, clear conclusion that answers:
+        - What is the user's main intention regarding cryptocurrency operations?
+        - Which specific cryptocurrencies are they interested in?
+        - What type of transaction are they likely to perform?
 
-        Focus specifically on determining if the user intends to:
-        - Buy cryptocurrency (and which one)
-        - Sell cryptocurrency (and which one)
-        - Exchange/swap tokens
+        Focus on the user's intent to:
+        - Buy cryptocurrency (specify which one)
+        - Sell cryptocurrency (specify which one)
+        - Exchange/swap tokens (specify which ones)
+        - Transfer funds to another wallet
+        - Involved wallet addresses
         - Research before making a transaction
-        - Execute a specific trading strategy
 
-        Be specific and detailed in your analysis, using all available information to determine the user's cryptocurrency transaction intent.
+        Give a direct, actionable conclusion about what the user is trying to accomplish with crypto.
         """
 
         # Llamar a la API de ChatGPT
@@ -233,6 +233,7 @@ def analyze_images_with_chatgpt():
         - "The user is reading an article about top 10 cryptocurrencies and currently viewing the CARDANO section"
         - "The user is on a DEX platform trying to swap ETH for another token"
         - "The user is reading a news article about Bitcoin price movements"
+        - "The user is on a wallet interface with the intention to transfer 0.5 ETH to wallet address 0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6"
 
         Focus on:
         - What platform or website the user is on
