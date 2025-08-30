@@ -27,11 +27,10 @@ RELEASED_TX = 1
 ACCEPTED_WARNING = 2
 
 def clean_intents():
+    global intents
     logger.info(f"Cleaning old intents {intents}")
-    for intent in intents:
-        intent_time = datetime.strptime(intent[-12:], "%Y%m%d%H%M")
-        if (datetime.now() - intent_time).seconds > INTENT_TIMEOUT:
-            intents.pop(intent, None)
+    now = datetime.now()
+    intents = {k: v for k, v in intents.items() if (now - datetime.strptime(k[-12:], "%Y%m%d%H%M")).seconds < INTENT_TIMEOUT}
     logger.info(f"Finished cleaning old intents {intents}")
 
 async def release_tx(tx_hash: str) -> str:
