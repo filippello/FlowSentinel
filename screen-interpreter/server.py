@@ -312,7 +312,7 @@ def stop_recording():
 
                     # Llamar a la API de ChatGPT con el formato correcto
                     response = client.responses.create(
-                        model="gpt-5-nano",
+                        model="gpt-5",
                         input=[
                             {
                                 "role": "user",
