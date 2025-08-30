@@ -242,6 +242,16 @@ def analyze_images_with_chatgpt():
         - Whether this suggests investment research, trading intent, or general crypto interest
         - Any suspicious or risky elements that might indicate scam attempts
 
+        It's very useful to capture any data regarding what the user might be trying to do. Specifically look for:
+        - Buy cryptocurrency (specify which one)
+        - Sell cryptocurrency (specify which one)
+        - Exchange/swap tokens (specify which ones)
+        - Transfer funds to another wallet
+        - Involved wallet addresses
+        - Research before making a transaction
+
+        Addresses can be ofuscated like 0xAdc8b143f...9BF75A4139 treat them with importance but say its an ofuscated address, like this ofuscatedAddress(0xAd8b143f...9BF75A4139)
+
         Write your response as if you're explaining to a colleague what the user is doing right now. Be natural and descriptive, not overly structured.
         """
 
