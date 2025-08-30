@@ -63,15 +63,26 @@ async def perform_request(body):
                 return request_result
 
 async def process_tx(tx_hash: str) -> tuple[int, str]:
-    tx = txs[tx_hash]
-    # Call TxSentinel API
-    # TODO popular
-    veredict = perform_request({
-        "chainId": int,
-        "from_address": Account.recover_transaction(tx.signed_raw_tx),
-        "to_address": str,
-        "data": str,
-        "value": str,
+    tx_info = txs[tx_hash]
+
+    tx_decoded = TypedTransaction.from_bytes(
+        HexBytes(tx_info.signed_raw_tx)
+    ).as_dict()
+
+    to_raw = tx_decoded.get("to")
+    to_address = HexBytes(to_raw).to_0x_hex() if to_raw is not None else None
+
+    data_raw = tx_decoded.get("data", b"")
+    data_hex = HexBytes(data_raw).to_0x_hex() if data_raw else "0x"
+
+    value = int(tx_decoded.get("value", 0))
+
+    veredict = await perform_request({
+        "chainId": w3c.eth.chain_id,
+        "from_address": tx_info.from_account,
+        "to_address": to_address,
+        "data": data_hex,
+        "value": str(value),  # <-- string
         "reason": ""
     })
 
