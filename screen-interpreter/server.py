@@ -165,6 +165,8 @@ def analyze_final_intent(previous_analyses):
         - Involved wallet addresses
         - Research before making a transaction
 
+        Its really important to capture the addresses, if you see any, you should capture and report them.
+
         Give a direct, actionable conclusion about what the user is trying to accomplish with crypto.
         """
 
@@ -251,6 +253,7 @@ def analyze_images_with_chatgpt():
         - Involved wallet addresses
         - Research before making a transaction
 
+        Its really important to capture the addresses, if you see any, you should capture and report them.
         Addresses can be ofuscated like 0xAdc8b143f...9BF75A4139 treat them with importance but say its an ofuscated address, like this ofuscatedAddress(0xAd8b143f...9BF75A4139)
 
         Write your response as if you're explaining to a colleague what the user is doing right now. Be natural and descriptive, not overly structured.
