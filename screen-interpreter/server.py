@@ -199,97 +199,6 @@ def analyze_final_intent(previous_analyses):
         logger.error(f"Error al realizar análisis final: {str(e)}")
         return None
 
-def analyze_images_with_chatgpt():
-    """Analiza la imagen más reciente con ChatGPT."""
-    global last_analysis_time, all_analyses
-    
-    current_time = time.time()
-    if current_time - last_analysis_time < ANALYSIS_COOLDOWN:
-        logger.info("Esperando cooldown antes del siguiente análisis")
-        return None
-    
-    if not image_buffer:
-        logger.info("No hay imágenes para analizar")
-        return None
-    
-    try:
-        # Obtener solo la imagen más reciente
-        latest_image_path = image_buffer[-1]
-        
-        if not os.path.exists(latest_image_path):
-            logger.error(f"No se encontró la imagen: {latest_image_path}")
-            return None
-            
-        # Downscale a 720p y codificar
-        base64_image = encode_image_downscaled(latest_image_path)
-        if not base64_image:
-            logger.error("Error al codificar la imagen (downscale)")
-            return None
-
-        # Crear el prompt para ChatGPT
-        prompt = """
-        You are analyzing a screenshot for a cryptocurrency transaction detection app. Your goal is to understand what the user is looking at and whether it relates to cryptocurrency investment or trading intentions.
-
-        Describe what you see in a natural, conversational way. For example:
-        - "The user is browsing Twitter and reading a post about the benefits of a specific cryptocurrency"
-        - "The user is searching Google for information about a particular crypto"
-        - "The user is reading an article about top 10 cryptocurrencies and currently viewing the CARDANO section"
-        - "The user is on a DEX platform trying to swap ETH for another token"
-        - "The user is reading a news article about Bitcoin price movements"
-        - "The user is on a wallet interface with the intention to transfer 0.5 ETH to wallet address 0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6"
-
-        Focus on:
-        - What platform or website the user is on
-        - What content they are consuming or interacting with
-        - Any cryptocurrency names, prices, or trading information visible
-        - Whether this suggests investment research, trading intent, or general crypto interest
-        - Any suspicious or risky elements that might indicate scam attempts
-
-        It's very useful to capture any data regarding what the user might be trying to do. Specifically look for:
-        - Buy cryptocurrency (specify which one)
-        - Sell cryptocurrency (specify which one)
-        - Exchange/swap tokens (specify which ones)
-        - Transfer funds to another wallet
-        - Involved wallet addresses
-        - Research before making a transaction
-
-        Its really important to capture the addresses, if you see any, you should capture and report them.
-        Addresses can be ofuscated like 0xAdc8b143f...9BF75A4139 treat them with importance but say its an ofuscated address, like this ofuscatedAddress(0xAd8b143f...9BF75A4139)
-
-        Write your response as if you're explaining to a colleague what the user is doing right now. Be natural and descriptive, not overly structured.
-        """
-
-        # Llamar a la API de ChatGPT con el formato correcto (responses.create)
-        response = client.responses.create(
-            model="gpt-5",
-            input=[
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "input_text", "text": prompt},
-                        {"type": "input_image", "image_url": f"data:image/jpeg;base64,{base64_image}"}
-                    ]
-                }
-            ]
-        )
-
-        # Guardar el análisis en un archivo
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        analysis_text = f"Timestamp: {timestamp}\nScreenshot information: {response.output_text}"
-        analysis_file = save_analysis_to_file(analysis_text)
-        if analysis_file:
-            logger.info(f"Análisis guardado en {analysis_file}")
-            all_analyses.append(analysis_text)
-            last_analysis_time = current_time
-            return analysis_text
-        else:
-            logger.error("Error al guardar el análisis")
-            return None
-
-    except Exception as e:
-        logger.error(f"Error al analizar imagen con ChatGPT: {str(e)}")
-        return None
-
 @app.route('/generate-final-analysis', methods=['POST'])
 def generate_final_analysis():
     """Endpoint para generar el análisis final con todos los análisis acumulados."""
@@ -371,18 +280,33 @@ def stop_recording():
                     # Crear el prompt para ChatGPT
                     prompt = """
                     You are analyzing a screenshot for a cryptocurrency transaction detection app. Your goal is to understand what the user is looking at and whether it relates to cryptocurrency investment or trading intentions.
+
                     Describe what you see in a natural, conversational way. For example:
                     - "The user is browsing Twitter and reading a post about the benefits of a specific cryptocurrency"
                     - "The user is searching Google for information about a particular crypto"
                     - "The user is reading an article about top 10 cryptocurrencies and currently viewing the CARDANO section"
                     - "The user is on a DEX platform trying to swap ETH for another token"
                     - "The user is reading a news article about Bitcoin price movements"
+                    - "The user is on a wallet interface with the intention to transfer 0.5 ETH to wallet address 0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6"
+
                     Focus on:
                     - What platform or website the user is on
                     - What content they are consuming or interacting with
                     - Any cryptocurrency names, prices, or trading information visible
                     - Whether this suggests investment research, trading intent, or general crypto interest
                     - Any suspicious or risky elements that might indicate scam attempts
+
+                    It's very useful to capture any data regarding what the user might be trying to do. Specifically look for:
+                    - Buy cryptocurrency (specify which one)
+                    - Sell cryptocurrency (specify which one)
+                    - Exchange/swap tokens (specify which ones)
+                    - Transfer funds to another wallet
+                    - Involved wallet addresses
+                    - Research before making a transaction
+
+                    Its really important to capture the addresses, if you see any, you should capture and report them.
+                    Addresses can be ofuscated like 0xAdc8b143f...9BF75A4139 treat them with importance but say its an ofuscated address, like this ofuscatedAddress(0xAd8b143f...9BF75A4139)
+
                     Write your response as if you're explaining to a colleague what the user is doing right now. Be natural and descriptive, not overly structured.
                     """
 
