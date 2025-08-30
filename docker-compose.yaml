@@ -5,10 +5,19 @@ services:
       context: rpc-server
       dockerfile: Dockerfile
     ports:
-      - "8089:8089"
+    - "8089:8089"
     environment:
       API_URL: http://54.242.235.110:8000/api/transaction
       LOGGING_LEVEL: info
       WORKERS: 2
       QUICKNODE_URL: https://black-proportionate-wave.base-mainnet.quiknode.pro/
       QUICKNODE_API_KEY: ${QUICKNODE_API_KEY}
+  screen-interpreter:
+    container_name: screen-interpreter
+    build:
+      context: screen-interpreter
+      dockerfile: Dockerfile
+    ports:
+    - "5001:5001"
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
