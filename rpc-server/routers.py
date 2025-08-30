@@ -2,13 +2,14 @@ import aiohttp
 import os
 import logging
 
-from fastapi import APIRouter, HTTPException
+from datetime import datetime
+from fastapi import APIRouter, HTTPException, Request
 from hexbytes import HexBytes
 from eth_typing import HexStr
 from eth_account import Account
 from eth_account.typed_transactions.typed_transaction import TypedTransaction
 
-from models import RPC, TxInfo
+from models import RPC, TxInfo, IntentRequest
 from web3 import Web3
 
 w3c = Web3(Web3.HTTPProvider(f"{os.environ['QUICKNODE_URL']}{os.environ['QUICKNODE_API_KEY']}"))
@@ -18,9 +19,20 @@ logger = logging.getLogger(__name__)
 rpc_router = APIRouter()
 
 txs: dict[str, TxInfo] = {}
+intents: dict[str, str] = {}
+
+INTENT_TIMEOUT = 3600
 
 RELEASED_TX = 1
 ACCEPTED_WARNING = 2
+
+def clean_intents():
+    logger.info(f"Cleaning old intents {intents}")
+    for intent in intents:
+        intent_time = datetime.strptime(intent[-12:], "%Y%m%d%H%M")
+        if (datetime.now() - intent_time).seconds > INTENT_TIMEOUT:
+            intents.pop(intent, None)
+    logger.info(f"Finished cleaning old intents {intents}")
 
 async def release_tx(tx_hash: str) -> str:
     tx_info = txs[tx_hash]
@@ -45,24 +57,24 @@ async def perform_request(body):
         async with session.post(os.environ["API_URL"], json=body) as resp:
             response_body = await resp.json()
             if resp.status > 299:
-                print(f"Error response from TxSentinel API: {response_body}")
+                logger.info(f"Error response from TxSentinel API: {response_body}")
                 return {
                     "status": "failed",
                     "message": f"Error evaluating transaction: HTTP {resp.status}",
                     "risks_detected": []
                 }
             else:
-                print(f"Successfully invoked TxSentinel API: {response_body}")
+                logger.info(f"Successfully invoked TxSentinel API: {response_body}")
                 agent_validations = response_body.get("validations", {}).get("agent", {})
                 request_result = {
                     "status": agent_validations.get("status", "approved"),
                     "message": agent_validations.get("message", "Transaction evaluated successfully."),
                     "risks_detected": agent_validations.get("risks_detected", [])
                 }
-                print(f"Request result: {request_result}")
+                logger.info(f"Request result: {request_result}")
                 return request_result
 
-async def process_tx(tx_hash: str) -> tuple[int, str]:
+async def process_tx(tx_hash: str, intent: str) -> tuple[int, str]:
     tx_info = txs[tx_hash]
 
     tx_decoded = TypedTransaction.from_bytes(
@@ -83,7 +95,7 @@ async def process_tx(tx_hash: str) -> tuple[int, str]:
         "to_address": to_address,
         "data": data_hex,
         "value": str(value),  # <-- string
-        "reason": ""
+        "reason": intent
     })
 
     if veredict["status"] != "approved":
@@ -93,8 +105,12 @@ async def process_tx(tx_hash: str) -> tuple[int, str]:
     logger.info(f"TX {tx_hash} ALLOWED, RELEASING.")
     return (RELEASED_TX, await release_tx(tx_hash))
 
+def get_intent_key(request: Request) -> str:
+    return str(f"{request.client.host}:{datetime.now().strftime('%Y%m%d%H%M')}")
+
 @rpc_router.post("/")
-async def rpc_handler(rpc: RPC) -> dict:
+async def rpc_handler(rpc: RPC, request: Request) -> dict:
+    clean_intents()
     if rpc.method != "eth_sendRawTransaction":
         logger.debug(f"DELEGATING REQUEST TO PROVIDER: {rpc.method}")
         return w3c.provider.make_request(rpc.method, rpc.params) # type: ignore
@@ -122,8 +138,10 @@ async def rpc_handler(rpc: RPC) -> dict:
         from_account=from_account,
     )
 
+    intent = intents[get_intent_key(request)]
+
     try:
-        t, s = await process_tx(tx_hash)
+        t, s = await process_tx(tx_hash, intent)
     except Exception as e:
         logger.error(f"ERROR PROCESSING TX: {e}")
         raise HTTPException(
@@ -140,7 +158,10 @@ async def rpc_handler(rpc: RPC) -> dict:
     raise
 
 @rpc_router.post("/intents")
-async def set_intent(body: dict):
-    logger.info(f"Setting intent: {body['intent']}")
-    # TODO guardar intent
+async def set_intent(intent_request: IntentRequest, request: Request):
+    clean_intents()
+    intent = intent_request.intent
+    if intent is None:
+        raise HTTPException(status_code=400, detail="Intent is required.")
+    intents[get_intent_key(request)] = intent
     return {"status": "ok"}

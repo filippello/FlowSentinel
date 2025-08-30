@@ -22,3 +22,6 @@ class RPC(CamelCaseModel):
     params: list
     id: int | str
     jsonrpc: str
+
+class IntentRequest(BaseModel):
+    intent: str
