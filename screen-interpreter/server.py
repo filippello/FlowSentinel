@@ -243,6 +243,81 @@ def send_intent_to_rpc_server(intent):
     except Exception as e:
         logger.error(f"Excepción al enviar análisis al servidor RPC: {str(e)}")
 
+def check_metamask_opened(image_path):
+    """
+    Checks if MetaMask is open in the provided image.
+    If it's open, invokes stop_recording.
+    Returns 1 or 0.
+    """
+    try:
+        logger.info(f"Checking if MetaMask is open in: {image_path}")
+        
+        # Verify that the image exists
+        if not os.path.exists(image_path):
+            logger.error(f"Image not found: {image_path}")
+            return 0
+        
+        # Encode the image to send to ChatGPT
+        base64_image = encode_image_downscaled(image_path)
+        if not base64_image:
+            logger.error("Error encoding the image")
+            return 0
+        
+        # Specific prompt to detect MetaMask
+        prompt = """
+        Analyze this screenshot and respond ONLY with "yes" or "no".
+        
+        Question: Does the user have MetaMask open in this image?
+        
+        Look for elements such as:
+        - MetaMask window or popup
+        - Visible MetaMask icon
+        - MetaMask wallet interface
+        - MetaMask connection or transaction buttons
+        
+        Respond ONLY with "yes" or "no", nothing else.
+        """
+        
+        # Call ChatGPT API
+        response = client.responses.create(
+            model="gpt-5",
+            input=[
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "input_text", "text": prompt},
+                        {"type": "input_image", "image_url": f"data:image/jpeg;base64,{base64_image}"}
+                    ]
+                }
+            ]
+        )
+        
+        # Get and clean the response
+        response_text = response.output_text.strip().lower()
+        logger.info(f"ChatGPT response: {response_text}")
+        
+        # Check if the response is "yes"
+        if response_text == "yes":
+            logger.info("MetaMask detected, invoking stop_recording")
+            # Invoke stop_recording
+            try:
+                # Create an internal request to simulate the call
+                with app.test_client() as client:
+                    response = client.post('/stop-recording')
+                    if response.status_code == 200:
+                        logger.info("stop_recording executed successfully")
+                    else:
+                        logger.error(f"Error executing stop_recording: {response.status_code}")
+            except Exception as e:
+                logger.error(f"Error invoking stop_recording: {str(e)}")
+            return 1
+        else:
+            return 0
+        
+    except Exception as e:
+        logger.error(f"Error checking MetaMask: {str(e)}")
+        return 0
+
 @app.route('/stop-recording', methods=['POST', 'OPTIONS'])
 def stop_recording():
     """Endpoint para detener la grabación, generar el análisis final y limpiar las imágenes."""
